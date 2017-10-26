@@ -102,9 +102,9 @@ class MatchCompiler:
         elif tok == '%op%':
             return 'tok->isOp()'
         elif tok == '%or%':
-            return '(tok->tokType() == Token::eBitOp && tok->str()==MatchCompiler::makeConstString("|") )'
+            return '(tok->tokType() == Token::eBitOp && tok->isEqualToSmallString(\'|\'))'
         elif tok == '%oror%':
-            return '(tok->tokType() == Token::eLogicalOp && tok->str()==MatchCompiler::makeConstString("||"))'
+            return '(tok->tokType() == Token::eLogicalOp && tok->isEqualToSmallString((((uint32_t) \'|\') << 8) | \'|\'))'
         elif tok == '%str%':
             return '(tok->tokType()==Token::eString)'
         elif tok == '%type%':
@@ -118,9 +118,16 @@ class MatchCompiler:
         elif (len(tok) > 2) and (tok[0] == "%"):
             print("unhandled:" + tok)
 
-        return (
-            '(tok->str()==MatchCompiler::makeConstString("' + tok + '"))'
-        )
+        if 1 == len(tok):
+           return ('(tok->isEqualToSmallString((uint32_t) \'%s\'))' % (tok[0]))
+        elif 2 == len(tok):
+           return ('(tok->isEqualToSmallString((((uint32_t) \'%s\') << 8) | \'%s\'))' % (tok[1], tok[0]))
+        elif 3 == len(tok):
+           return ('(tok->isEqualToSmallString((((uint32_t) \'%s\') << 16) | (((uint32_t) \'%s\') << 8) | \'%s\'))' % (tok[2], tok[1], tok[0]))
+        else:
+           return (
+                 '(tok->str()==MatchCompiler::makeConstString("' + tok + '"))'
+           )
 
     def _compilePattern(self, pattern, nr, varid,
                         isFindMatch=False, tokenType="const Token"):
@@ -575,6 +582,43 @@ class MatchCompiler:
 
         return line
 
+    def _replaceSmallStrings(self, line):
+        processed = ''
+        toProcess = line
+        while len(toProcess):
+            match = re.search('([^ ]+)->str\(\) ([!=])= "([^"]+)"', toProcess)
+            if not match:
+                break
+
+            variableName = match.group(1)
+            comparison   = match.group(2)
+            text         = match.group(3)
+
+            replacement = ''
+
+            processed += toProcess[:match.start()]
+
+            if 1 == len(text):
+               replacement = "%s->isEqualToSmallString((uint32_t) '%s')" % (variableName, text[0])
+            elif 2 == len(text):
+               replacement = "%s->isEqualToSmallString((((uint32_t) \'%s\') << 8) | \'%s\')" % (variableName, text[1], text[0])
+            elif 3 == len(text):
+               replacement = "%s->isEqualToSmallString((((uint32_t) \'%s\') << 16) | (((uint32_t) \'%s\') << 8) | \'%s\')" % (variableName, text[2], text[1], text[0])
+            else:
+               pass
+
+            if 0 == len(replacement):
+               processed += toProcess[match.start():match.end()]
+            else:
+               if '=' == comparison:
+                  processed += replacement
+               else:
+                  processed += "(!%s)" % replacement
+
+            toProcess = toProcess[match.end():]
+
+        return processed + toProcess
+
     def _replaceCStrings(self, line):
         while True:
             match = re.search('(==|!=) *"', line)
@@ -620,6 +664,8 @@ class MatchCompiler:
 
             # Compile Token::findsimplematch
             line = self._replaceTokenFindMatch(line, linenr, srcname)
+
+            line = self._replaceSmallStrings(line)
 
             # Cache plain C-strings in C++ strings
             line = self._replaceCStrings(line)
