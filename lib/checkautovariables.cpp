@@ -155,7 +155,8 @@ static bool checkRvalueExpression(const Token * const vartok)
         return var2 && !var2->isPointer();
     }
 
-    return ((next->str() != "." || (!var->isPointer() && (!var->isClass() || var->type()))) && next->strAt(2) != ".");
+    const bool nextIsNotDot = next->str() != ".";
+    return ((nextIsNotDot || (!var->isPointer() && (!var->isClass() || var->type()))) && next->strAt(2) != ".");
 }
 
 static bool variableIsUsedInScope(const Token* start, unsigned int varId, const Scope *scope)

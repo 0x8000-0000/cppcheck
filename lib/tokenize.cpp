@@ -4929,7 +4929,8 @@ bool Tokenizer::simplifyConditions()
             ret = true;
         }
         if (Token::Match(tok, "&&|%oror% %num% )|%oror%|&&")) {
-            tok->next()->str((tok->next()->str() != "0") ? "true" : "false");
+            const bool isNot0 = tok->next()->str() != "0";
+            tok->next()->str(isNot0 ? "true" : "false");
             ret = true;
         }
 
