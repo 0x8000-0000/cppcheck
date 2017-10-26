@@ -111,8 +111,23 @@ void Token::update_property_info()
             tokType(eBracket);
         else
             tokType(eOther);
+
+        const size_t strSize = _str.size();
+        const uint8_t* data = (const uint8_t*) _str.data();
+        _smallStr = data[0];
+        if (strSize > 1) {
+           _smallStr |= ((uint32_t) data[1]) << 8;
+           if (strSize > 2) {
+              _smallStr |= ((uint32_t) data[2]) << 16;
+              if (strSize > 3) {
+                 _smallStr |= ((uint32_t) data[3]) << 24;
+              }
+           }
+        }
+
     } else {
         tokType(eNone);
+        _smallStr = 0;
     }
 
     update_property_isStandardType();
@@ -210,6 +225,7 @@ void Token::swapWithNext()
 {
     if (_next) {
         std::swap(_str, _next->_str);
+        std::swap(_smallStr, _next->_smallStr);
         std::swap(_tokType, _next->_tokType);
         std::swap(_flags, _next->_flags);
         std::swap(_varId, _next->_varId);
@@ -232,6 +248,7 @@ void Token::swapWithNext()
 void Token::takeData(Token *fromToken)
 {
     _str = fromToken->_str;
+    _smallStr = fromToken->_smallStr;
     tokType(fromToken->_tokType);
     _flags = fromToken->_flags;
     _varId = fromToken->_varId;

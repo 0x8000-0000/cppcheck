@@ -299,6 +299,8 @@ public:
     }
     bool isUnaryPreOp() const;
 
+    bool isEqualToSmallString(uint32_t otherSmallString) const { return _smallStr == otherSmallString; }
+
     unsigned int flags() const {
         return _flags;
     }
@@ -844,6 +846,7 @@ private:
      */
     static const char *chrInFirstWord(const char *str, char c);
 
+    uint32_t _smallStr;
     std::string _str;
 
     Token *_next;
