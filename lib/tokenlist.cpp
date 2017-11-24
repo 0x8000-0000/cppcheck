@@ -42,7 +42,8 @@ TokenList::TokenList(const Settings* settings) :
     _back(nullptr),
     _settings(settings),
     _isC(false),
-    _isCPP(false)
+    _isCPP(false),
+    _allTokens(nullptr)
 {
 }
 
@@ -66,7 +67,16 @@ const std::string& TokenList::getSourceFilePath() const
 // Deallocate lists..
 void TokenList::deallocateTokens()
 {
-    deleteTokens(_front);
+    if (_allTokens)
+    {
+       delete[] _allTokens;
+       _allTokens = nullptr;
+    }
+    else
+    {
+       deleteTokens(_front);
+       _back = nullptr;
+    }
     _front = nullptr;
     _back = nullptr;
     _files.clear();
@@ -1233,5 +1243,15 @@ void TokenList::simplifyStdType()
             }
         }
     }
+}
+
+void TokenList::vectorizeTokens()
+{
+   unsigned int count = 0;
+   _allTokens = Token::vectorizeTokens(_front, &count);
+
+   deleteTokens(_front);
+   _back = _allTokens + count - 1;
+   _front = _allTokens;
 }
 

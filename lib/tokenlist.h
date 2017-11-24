@@ -162,6 +162,9 @@ public:
      */
     void simplifyStdType();
 
+    /** Move all tokens from a list to a vector to improve performance */
+    void vectorizeTokens();
+
 private:
 
     /** Disable copy constructor, no implementation */
@@ -181,6 +184,9 @@ private:
 
     /** File is known to be C/C++ code */
     bool _isC, _isCPP;
+
+    /** Store the tokens after call to vectorizeTokens() */
+    Token* _allTokens;
 };
 
 /// @}

@@ -244,7 +244,7 @@ void Token::swapWithNext()
     }
 }
 
-void Token::takeData(Token *fromToken)
+void Token::takeData0(Token *fromToken)
 {
     _str = fromToken->_str;
     tokType(fromToken->_tokType);
@@ -266,6 +266,10 @@ void Token::takeData(Token *fromToken)
     delete valuetype;
     valuetype = fromToken->valuetype;
     fromToken->valuetype = nullptr;
+}
+
+void Token::takeData(Token *fromToken) {
+    takeData0(fromToken);
     if (_link)
         _link->link(this);
 }
@@ -1646,5 +1650,45 @@ void Token::type(const ::Type *t)
         isEnumType(_type->isEnumType());
     } else if (_tokType == eType)
         tokType(eName);
+}
+
+Token* Token::vectorizeTokens(Token* front, unsigned int* count)
+{
+    unsigned int tokenCount = 0;
+    for (Token *tok = front; tok; tok = tok->next()) {
+       tokenCount ++;
+    }
+
+    *count = tokenCount;
+
+    Token* tokenSupport = new Token[tokenCount];
+
+    Token* newFront = tokenSupport;
+
+    Token* previous = nullptr;
+
+    for (Token *tok = front; tok; tok = tok->next()) {
+       newFront->takeData0(tok);
+
+       tok->_previous = newFront;
+
+       newFront->tokensBack = &tokenSupport[tokenCount - 2]._next;
+       newFront->_previous = previous;
+       newFront->_next = newFront + 1;
+       newFront->_link = nullptr;
+
+       previous = newFront;
+
+       newFront ++;
+    }
+    tokenSupport[tokenCount - 1]._next = nullptr;
+
+    for (Token *tok = front; tok; tok = tok->next()) {
+       if (tok->_link) {
+          tok->_previous->link(tok->_link->_previous);
+       }
+    }
+
+    return tokenSupport;
 }
 

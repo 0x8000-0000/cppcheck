@@ -57,7 +57,6 @@ private:
     Token **tokensBack;
 
     // Not implemented..
-    Token();
     Token(const Token &);
     Token operator=(const Token &);
 
@@ -71,7 +70,7 @@ public:
         eNone
     };
 
-    explicit Token(Token **tokens);
+    explicit Token(Token **tokens = nullptr);
     ~Token();
 
     template<typename T>
@@ -831,6 +830,7 @@ private:
     }
 
     /** used by deleteThis() to take data from token to delete */
+    void takeData0(Token *fromToken);
     void takeData(Token *fromToken);
 
     /**
@@ -996,6 +996,8 @@ public:
     void printAst(bool verbose, bool xml, std::ostream &out) const;
 
     void printValueFlow(bool xml, std::ostream &out) const;
+
+    static Token* vectorizeTokens(Token* front, unsigned int* count);
 };
 
 /// @}

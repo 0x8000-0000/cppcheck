@@ -3843,8 +3843,8 @@ bool Tokenizer::simplifyTokenList1(const char FileName[])
 
     SimplifyNamelessRValueReferences();
 
-
     validate();
+
     return true;
 }
 
@@ -3989,6 +3989,10 @@ bool Tokenizer::simplifyTokenList2()
         return false;
 
     printDebugOutput(2);
+
+    list.vectorizeTokens();
+
+    validate();
 
     return true;
 }
